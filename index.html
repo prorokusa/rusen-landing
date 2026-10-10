@@ -711,22 +711,53 @@
 
   <!-- FOOTER -->
   <footer class="py-12 border-t border-white/5 bg-slate-950 text-slate-400 text-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       
-      <div class="flex items-center space-x-3">
-        <img src="assets/app_icon.png" alt="RusEn" class="w-6 h-6 rounded-md">
-        <span class="text-slate-300 font-bold font-display">RusEn Engine</span>
-        <span>© 2026. Разработано для комфортной работы с текстом.</span>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <img src="assets/app_icon.png" alt="RusEn" class="w-6 h-6 rounded-md">
+          <span class="text-slate-300 font-bold font-display">RusEn Engine</span>
+          <span>© 2026. Разработано для комфортной работы с текстом.</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-6">
+          <a href="https://t.me/GEOHEISENBERG" target="_blank" class="hover:text-white transition-colors">Telegram @GEOHEISENBERG</a>
+          <a href="https://github.com/prorokusa/RusEn-App" target="_blank" class="hover:text-white transition-colors">GitHub Releases</a>
+          <a href="#quickstart" class="hover:text-white transition-colors">Инструкция</a>
+        </div>
       </div>
 
-      <div class="flex items-center space-x-6">
-        <a href="https://t.me/GEOHEISENBERG" target="_blank" class="hover:text-white transition-colors">Telegram @GEOHEISENBERG</a>
-        <a href="https://github.com/prorokusa/RusEn-App" target="_blank" class="hover:text-white transition-colors">GitHub Releases</a>
-        <a href="#quickstart" class="hover:text-white transition-colors">Инструкция</a>
+      <!-- Legal fine-print bar -->
+      <div class="pt-6 border-t border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-[11px] text-slate-500 leading-relaxed">
+        <p class="max-w-3xl">
+          <strong>Отказ от ответственности:</strong> Программное обеспечение RusEn предоставляется на условиях «КАК ЕСТЬ» (AS IS) без каких-либо явных или подразумеваемых гарантий. Автор и разработчики не несут ответственности за возможный прямой или косвенный ущерб, сбои или несовместимость с другим ПО. Программа не собирает персональные данные и не ведет запись текста (соответствие 152-ФЗ РФ).
+        </p>
+
+        <div class="flex flex-wrap items-center gap-4 shrink-0">
+          <a href="terms.html#disclaimer" class="hover:text-slate-300 underline underline-offset-2">Отказ от ответственности (AS IS)</a>
+          <a href="terms.html#privacy" class="hover:text-slate-300 underline underline-offset-2">Политика 152-ФЗ</a>
+          <a href="terms.html#cookies" class="hover:text-slate-300 underline underline-offset-2">Файлы Cookie</a>
+        </div>
       </div>
 
     </div>
   </footer>
+
+  <!-- COOKIE & 152-FZ BANNER -->
+  <div id="cookie-banner" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/30 shadow-2xl backdrop-blur-lg flex flex-col space-y-3 text-xs text-slate-300">
+    <div class="flex items-start space-x-2.5">
+      <span class="text-base">🍪</span>
+      <p class="leading-relaxed text-[11px]">
+        Сайт не собирает персональные данные. Мы используем минимальные технические cookie в соответствии с 152-ФЗ. ПО предоставляется на условиях «КАК ЕСТЬ» (AS IS). 
+        <a href="terms.html" class="text-indigo-400 hover:underline">Подробнее об условиях и отказе от ответственности →</a>
+      </p>
+    </div>
+    <div class="flex items-center justify-end space-x-2">
+      <button onclick="acceptCookies()" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors text-xs">
+        Понятно, принять
+      </button>
+    </div>
+  </div>
 
   <!-- DEMO INTERACTIVITY SCRIPT -->
   <script>
@@ -823,6 +854,25 @@
 
       }, 1500);
     }
+
+    function checkCookies() {
+      try {
+        if (localStorage.getItem('rusen_cookie_accepted') === '1') {
+          const banner = document.getElementById('cookie-banner');
+          if (banner) banner.style.display = 'none';
+        }
+      } catch (e) {}
+    }
+
+    function acceptCookies() {
+      try {
+        localStorage.setItem('rusen_cookie_accepted', '1');
+      } catch (e) {}
+      const banner = document.getElementById('cookie-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    window.addEventListener('DOMContentLoaded', checkCookies);
   </script>
 
 </body>

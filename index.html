@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RusEn — Умное переключение раскладки и голосовой ввод Whisper AI для Windows</title>
+  <meta name="description" content="Бесплатная утилита для Windows 10/11: интеллектуальное автопереключение клавиатуры на лету, мгновенная замена слова по CapsLock и сверхбыстрый голосовой ввод через Groq Cloud Whisper AI.">
+  <meta name="keywords" content="RusEn, punto switcher аналог, переключение раскладки, голосовой ввод, whisper ai, groq api, windows 11, capslock переключение">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="RusEn — Умная раскладка и голосовой ввод Whisper AI">
+  <meta property="og:description" content="Мгновенное исправление слов, удобный CapsLock и сверхбыстрый ввод голосом за 0.2 сек. Бесплатно для Windows 10/11.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rusen.winserv.space">
+  <meta property="og:image" content="https://rusen.winserv.space/assets/app_icon.png">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="assets/app_icon.ico">
+  <link rel="icon" type="image/png" href="assets/app_icon.png">
+  <link rel="apple-touch-icon" href="assets/app_icon.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#EEF2FF',
+              100: '#E0E7FF',
+              400: '#818CF8',
+              500: '#6366F1',
+              600: '#4F46E5',
+              700: '#4338CA',
+              cyan: '#06B6D4',
+              accent: '#38BDF8',
+              dark: '#080B11',
+              card: '#0F1523',
+              cardborder: '#1E293B',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #080B11;
+      color: #F1F5F9;
+      overflow-x: hidden;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Glows & Gradients */
+    .hero-glow-1 {
+      position: absolute;
+      top: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 750px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(6, 182, 212, 0.08) 50%, rgba(0, 0, 0, 0) 80%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-glow-2 {
+      position: absolute;
+      top: 35%;
+      right: 5%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glass-card {
+      background: rgba(15, 21, 35, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #FFFFFF 20%, #A5B4FC 60%, #38BDF8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .kbd-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-bottom: 2px solid #0F172A;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85em;
+      color: #E2E8F0;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    /* Wave visualizer animation */
+    @keyframes pulseBar {
+      0%, 100% { height: 8px; }
+      50% { height: 38px; }
+    }
+    .wave-bar {
+      width: 4px;
+      background: linear-gradient(to top, #6366F1, #38BDF8);
+      border-radius: 999px;
+      animation: pulseBar 1.2s ease-in-out infinite;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.6s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.25s; }
+    .wave-bar:nth-child(7) { animation-delay: 0.5s; }
+    .wave-bar:nth-child(8) { animation-delay: 0.35s; }
+  </style>
+</head>
+<body class="relative min-h-screen selection:bg-brand-500 selection:text-white">
+
+  <!-- Background decorative glows -->
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+
+  <!-- NAVIGATION BAR -->
+  <header class="sticky top-0 z-50 w-full backdrop-blur-md bg-brand-dark/80 border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Logo -->
+      <a href="#" class="flex items-center space-x-3 group">
+        <div class="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/20 ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-300">
+          <img src="assets/app_icon.png" alt="RusEn Logo" class="w-full h-full object-cover">
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-display font-extrabold text-2xl tracking-tight text-white">RusEn</span>
+            <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-brand-600/30 text-indigo-300 border border-brand-500/30">v1.0</span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono -mt-1 hidden sm:block">Voice & Auto-Layout Engine</p>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+        <a href="#features" class="hover:text-white transition-colors">Возможности</a>
+        <a href="#interactive-demo" class="hover:text-white transition-colors">Демонстрация</a>
+        <a href="#quickstart" class="hover:text-white transition-colors">Быстрый старт</a>
+        <a href="#groq-guide" class="hover:text-white transition-colors">Groq API</a>
+        <a href="#community" class="hover:text-white transition-colors">Контакты и Донат</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-3">
+        <a href="https://github.com/prorokusa/RusEn-App" target="_blank" rel="noopener noreferrer" 
+           class="hidden sm:inline-flex items-center space-x-2 px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+
+        <a href="#download" 
+           class="inline-flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-indigo-500 hover:from-brand-500 hover:to-indigo-400 rounded-lg shadow-lg shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.551H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.952"/></svg>
+          <span>Скачать RusEn</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="relative pt-16 pb-20 sm:pt-24 sm:pb-32 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+
+      <!-- Badge -->
+      <div class="inline-flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-indigo-500/30 shadow-inner mb-8">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span class="text-xs font-mono font-medium text-indigo-300">Релиз RusEn v1.0 • Сверхбыстрый ввод для Windows 10/11</span>
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="font-display font-extrabold text-4xl sm:text-6xl lg:text-7xl tracking-tight max-w-5xl mx-auto leading-[1.1] mb-6">
+        Печатайте без сбоев.<br>
+        <span class="gradient-text">Диктуйте со скоростью мысли.</span>
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="max-w-3xl mx-auto text-lg sm:text-xl text-slate-300 font-normal leading-relaxed mb-10">
+        Умное автопереключение клавиатуры на лету, мгновенная замена слова по нажатию <span class="kbd-key">CapsLock</span> без залипания и сверхбыстрый голосовой ввод через <strong class="text-white">Groq Whisper AI</strong> с задержкой всего 0.2 секунды.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+        <a href="#download" 
+           class="w-full sm:w-auto inline-flex items-center justify-center space-x-3 px-8 py-4 text-base font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-xl shadow-indigo-600/30 ring-1 ring-white/20 transition-all hover:scale-105 active:scale-95">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.551H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.952"/></svg>
+          <span>Скачать установщик (.exe)</span>
+          <span class="text-xs py-0.5 px-2 bg-indigo-800 rounded font-mono">v1.0</span>
+        </a>
+
+        <a href="#interactive-demo" 
+           class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-4 text-base font-semibold text-slate-200 hover:text-white bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 rounded-xl transition-all">
+          <span>⚡ Протестировать демо</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </a>
+      </div>
+
+      <!-- Feature Pill Badges -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-4 text-left">
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl font-bold font-mono text-emerald-400">0.24 сек</div>
+          <div class="text-xs text-slate-400 mt-1">Средняя скорость транскрибации речи через Groq LPU</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl font-bold font-mono text-indigo-400">0 мс</div>
+          <div class="text-xs text-slate-400 mt-1">Нулевая задержка ввода: нативный Win32 Hook</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl font-bold font-mono text-cyan-400">Multi-Key</div>
+          <div class="text-xs text-slate-400 mt-1">Round-Robin пул ключей без ошибок 429 Rate Limit</div>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl font-bold font-mono text-amber-400">100% Free</div>
+          <div class="text-xs text-slate-400 mt-1">Открытый исходный код, без рекламы и слежки</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- INTERACTIVE DEMO SHOWCASE -->
+  <section id="interactive-demo" class="py-20 relative bg-slate-950/60 border-y border-white/5">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white mb-4">
+          Почувствуйте разницу в реальном времени
+        </h2>
+        <p class="text-slate-400 text-base">
+          Интерактивный симулятор работы двух главных возможностей RusEn: автопереключения текста на лету и ультрабыстрой диктовки Whisper AI.
+        </p>
+      </div>
+
+      <!-- Demo Container with Tabs -->
+      <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 shadow-2xl">
+        
+        <!-- Tab selector -->
+        <div class="flex items-center space-x-3 border-b border-white/10 pb-5 mb-6">
+          <button id="tab-btn-typing" onclick="switchDemoTab('typing')" 
+                  class="flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 text-white shadow-md">
+            <span>⌨️ Автозамена на лету</span>
+          </button>
+          <button id="tab-btn-voice" onclick="switchDemoTab('voice')" 
+                  class="flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-slate-800 text-slate-400 hover:text-white transition-colors">
+            <span>🎙️ Голосовой ввод Whisper AI</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: TYPING SIMULATOR -->
+        <div id="demo-tab-typing" class="block space-y-6">
+          
+          <div class="flex flex-col md:flex-row items-stretch gap-6">
+            <!-- Left: Terminal mock -->
+            <div class="flex-1 bg-black/60 rounded-xl p-5 border border-slate-800 font-mono text-sm relative">
+              <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800/80 text-xs text-slate-400">
+                <div class="flex items-center space-x-2">
+                  <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+                  <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+                  <span class="ml-2 text-slate-500">Любое приложение (Word, Telegram, Браузер, Код)</span>
+                </div>
+                <div id="layout-badge" class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700 text-xs font-bold font-mono">
+                  EN
+                </div>
+              </div>
+
+              <!-- Output area -->
+              <div class="min-h-[140px] text-slate-200 text-base leading-relaxed flex items-center">
+                <span id="typing-output" class="text-white font-medium">ghbdtn rfr ltkf?</span>
+                <span class="w-2.5 h-5 bg-indigo-400 animate-pulse ml-1 inline-block"></span>
+              </div>
+
+              <div id="status-toast" class="mt-4 p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+                <span>⚡ Смена раскладки и исправление: <strong id="action-label">Ожидание...</strong></span>
+                <span class="text-slate-400 font-mono text-[10px]" id="action-time">0 ms</span>
+              </div>
+            </div>
+
+            <!-- Right: Controls -->
+            <div class="w-full md:w-80 flex flex-col justify-between space-y-4">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-200 mb-2">Как это работает:</h4>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Когда вы начинаете печатать слово не на том языке (например, забыли переключиться с английского), RusEn при нажатии пробела или <span class="kbd-key">CapsLock</span> моментально конвертирует слово и переключает язык Windows.
+                </p>
+              </div>
+
+              <div class="space-y-2">
+                <button onclick="runTypingDemo('ghbdtn rfr ltkf', 'привет как дела')" 
+                        class="w-full text-left p-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/60 transition-colors text-xs flex items-center justify-between group">
+                  <div>
+                    <div class="font-mono text-indigo-300">ghbdtn rfr ltkf</div>
+                    <div class="text-slate-400 text-[11px]">→ привет как дела</div>
+                  </div>
+                  <span class="text-indigo-400 group-hover:translate-x-1 transition-transform">▶ Тест</span>
+                </button>
+
+                <button onclick="runTypingDemo('руддщ цщкдв', 'hello world')" 
+                        class="w-full text-left p-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/60 transition-colors text-xs flex items-center justify-between group">
+                  <div>
+                    <div class="font-mono text-cyan-300">руддщ цщкдв</div>
+                    <div class="text-slate-400 text-[11px]">→ hello world</div>
+                  </div>
+                  <span class="text-cyan-400 group-hover:translate-x-1 transition-transform">▶ Тест</span>
+                </button>
+
+                <button onclick="runTypingDemo('njulf crfxbdfybt', 'тогда скачивание')" 
+                        class="w-full text-left p-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/60 transition-colors text-xs flex items-center justify-between group">
+                  <div>
+                    <div class="font-mono text-emerald-300">njulf crfxbdfybt</div>
+                    <div class="text-slate-400 text-[11px]">→ тогда скачивание</div>
+                  </div>
+                  <span class="text-emerald-400 group-hover:translate-x-1 transition-transform">▶ Тест</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB 2: VOICE SIMULATOR -->
+        <div id="demo-tab-voice" class="hidden space-y-6">
+          <div class="flex flex-col md:flex-row items-stretch gap-6">
+            
+            <!-- Voice Demo UI -->
+            <div class="flex-1 bg-black/60 rounded-xl p-5 border border-slate-800 relative">
+              <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800/80 text-xs text-slate-400">
+                <span class="font-mono">Режим Push-to-Talk: Удержание <span class="kbd-key">Левый Shift</span> или тап <span class="kbd-key">F8</span></span>
+                <span id="voice-state-badge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold">Готов</span>
+              </div>
+
+              <!-- Animated Wave Visualizer -->
+              <div id="voice-wave-container" class="h-20 bg-slate-950 rounded-lg flex items-center justify-center space-x-2 border border-slate-800/80 mb-4 opacity-40">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+              </div>
+
+              <!-- Voice Output text -->
+              <div class="min-h-[70px] bg-slate-900/50 rounded-lg p-3 text-slate-300 text-sm font-mono leading-relaxed" id="voice-transcript">
+                Нажмите кнопку ниже для симуляции распознавания речи...
+              </div>
+
+              <div class="mt-4 flex items-center justify-between text-xs text-slate-400">
+                <span>Модель: <strong class="text-indigo-400 font-mono">whisper-large-v3</strong> (Groq Cloud)</span>
+                <span id="voice-latency" class="font-mono text-emerald-400 font-bold">Задержка: —</span>
+              </div>
+            </div>
+
+            <!-- Voice Controls -->
+            <div class="w-full md:w-80 flex flex-col justify-between space-y-4">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-200 mb-2">Голосовой ввод Push-to-Talk</h4>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Просто зажмите левый <span class="kbd-key">Shift</span> в любом месте Windows, надиктуйте мысль и отпустите. Текст сразу же впечатается с идеальной расстановкой знаков препинания.
+                </p>
+              </div>
+
+              <div class="space-y-3">
+                <button id="btn-simulate-voice" onclick="simulateVoiceRecord()" 
+                        class="w-full py-4 px-4 rounded-xl bg-gradient-to-r from-red-600 to-indigo-600 hover:from-red-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 transition-transform active:scale-95">
+                  <span class="w-3 h-3 rounded-full bg-white animate-pulse"></span>
+                  <span>Симулировать голосовой ввод</span>
+                </button>
+
+                <p class="text-[11px] text-slate-500 text-center">
+                  В реальной программе аудио передается напрямую в Groq API за 240 мс без сохранения звука на диске.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section id="features" class="py-24 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-white tracking-tight mb-4">
+          Создан для максимальной продуктивности
+        </h2>
+        <p class="text-slate-400 text-lg">
+          Все ключевые функции объединены в одном легковесном приложении без перегруженного интерфейса.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <!-- Feature 1 -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-6 text-2xl">
+              ⌨️
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Умный CapsLock без залипания</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Одиночное касание <span class="kbd-key">CapsLock</span> переключает язык и исправляет последнее набранное слово. При этом заглавные буквы сохраняются при удержании или двойном тапе.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-white/5 flex items-center text-xs text-indigo-400 font-mono">
+            <span>✓ Заменяет Ctrl+Shift и Alt+Shift</span>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 text-2xl">
+              ⚡
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Автозамена на лету</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              RusEn анализирует n-граммы и частотность символов. Как только вы завершаете ошибочное слово пробелом или Enter, программа на лету меняет раскладку и заменяет текст без мерцания.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-white/5 flex items-center text-xs text-cyan-400 font-mono">
+            <span>✓ Корректная обработка первого слова</span>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-6 text-2xl">
+              🎙️
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Groq Whisper AI (LPU)</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Интеграция с Whisper Large v3 через сверхбыстрые тензорные процессоры Groq LPU. Распознавание русской и английской речи занимает рекордные 200–300 мс с безупречной пунктуацией.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-white/5 flex items-center text-xs text-purple-400 font-mono">
+            <span>✓ Push-to-Talk по левому Shift</span>
+          </div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6 text-2xl">
+              🔄
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Round-Robin пул ключей</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Добавьте несколько бесплатных ключей Groq API. RusEn автоматически распределяет запросы по кругу. При исчерпании лимита (ошибка 429) запрос бесшовно переходит на следующий ключ.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-white/5 flex items-center text-xs text-emerald-400 font-mono">
+            <span>✓ Кнопка живой проверки ключа</span>
+          </div>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6 text-2xl">
+              📴
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Офлайн-режим (GigaAM / Vosk)</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Нет интернета? Не проблема! RusEn поддерживает работу с компактной локальной моделью Sber GigaAM и Vosk, позволяя надиктовывать текст в полевых условиях или закрытых контурах.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-white/5 flex items-center text-xs text-amber-400 font-mono">
+            <span>✓ Полная автономность</span>
+          </div>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-6 text-2xl">
+              🛡️
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Конфиденциальность & Контроль</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Никакого кейлоггинга и сторонних серверов. RusEn работает локально на вашем ПК, не собирает персональные данные и передает звук только по защищенному SSL-соединению в Groq.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-white/5 flex items-center text-xs text-blue-400 font-mono">
+            <span>✓ Открытый аудит исходников</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- QUICKSTART & GROQ API GUIDE -->
+  <section id="groq-guide" class="py-20 relative bg-brand-card/40 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-medium mb-3">
+          🔑 Бесплатно и навсегда
+        </div>
+        <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white mb-4">
+          Как получить бесплатный ключ Groq API
+        </h2>
+        <p class="text-slate-300 text-base">
+          Groq предоставляет щедрый бесплатный лимит на модель Whisper Large v3 (тысячи минут распознавания в месяц). Получение занимает ровно 1 минуту.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        
+        <!-- Step 1 -->
+        <div class="glass-card p-6 rounded-xl relative">
+          <div class="w-8 h-8 rounded-full bg-indigo-600 font-mono font-bold text-white flex items-center justify-center text-sm mb-4">1</div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Перейдите на Groq Console</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            Откройте официальную консоль разработчиков Groq. Авторизуйтесь в 1 клик через аккаунт Google или GitHub.
+          </p>
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" 
+             class="inline-flex items-center space-x-1.5 text-xs font-semibold text-cyan-400 hover:text-cyan-300">
+            <span>console.groq.com/keys</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="glass-card p-6 rounded-xl relative">
+          <div class="w-8 h-8 rounded-full bg-indigo-600 font-mono font-bold text-white flex items-center justify-center text-sm mb-4">2</div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Создайте ключ</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            Нажмите кнопку <strong>«Create API Key»</strong>, укажите любое имя (например, <code>RusEn</code>) и скопируйте полученную строку, начинающуюся с <code>gsk_...</code>
+          </p>
+          <div class="text-[11px] font-mono text-slate-400 bg-black/40 p-2 rounded border border-slate-800">
+            gsk_x9K2pQ8...
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="glass-card p-6 rounded-xl relative">
+          <div class="w-8 h-8 rounded-full bg-indigo-600 font-mono font-bold text-white flex items-center justify-center text-sm mb-4">3</div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Вставьте в RusEn</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            В меню трея выберите «Настройки» → вкладка «Модель и Голос», вставьте ключ и нажмите кнопку <strong>«Проверить ключ»</strong>. Программа подтвердит доступ зеленым значком!
+          </p>
+          <div class="text-[11px] font-mono text-emerald-400">
+            ✓ Ключ активен и готов к работе
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pro tip -->
+      <div class="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/20 flex items-start space-x-3 text-xs text-indigo-200">
+        <span class="text-base">💡</span>
+        <div>
+          <strong class="text-white">Совет для активных пользователей:</strong> Вы можете создать и добавить 2–3 разных ключа (например, с двух Google-аккаунтов). RusEn будет циклически распределять нагрузку (Round-Robin), и вы никогда не столкнетесь с минутными лимитами Groq.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- COMMUNITY, TELEGRAM & DONATION SECTION -->
+  <section id="community" class="py-24 relative">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white mb-4">
+          Обратная связь и Поддержка проекта
+        </h2>
+        <p class="text-slate-400 text-base">
+          RusEn создается для людей. Вы можете напрямую связаться с автором в Telegram для предложений или отблагодарить за разработку донатом.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        
+        <!-- CARD 1: TELEGRAM -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col items-center text-center">
+          <div class="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-6">
+            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.458c.538-.196 1.006.128.832.943z"/></svg>
+          </div>
+
+          <h3 class="font-display font-bold text-2xl text-white mb-2">Telegram автора</h3>
+          <p class="text-xs text-slate-400 mb-6 max-w-xs">
+            Нашли ошибку, есть идея или хотите задать вопрос по работе программы? Напишите напрямую:
+          </p>
+
+          <!-- QR Code container -->
+          <div class="p-3 bg-white rounded-xl shadow-xl mb-4">
+            <img src="assets/telegram_qr.png" alt="Telegram QR @GEOHEISENBERG" class="w-44 h-44 object-contain">
+          </div>
+
+          <a href="https://t.me/GEOHEISENBERG" target="_blank" rel="noopener noreferrer" 
+             class="inline-flex items-center space-x-2 text-sky-400 hover:text-sky-300 font-semibold text-base transition-colors group">
+            <span>@GEOHEISENBERG</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </a>
+          <span class="text-[11px] text-slate-500 mt-2">Канал связи и поддержка пользователей</span>
+        </div>
+
+        <!-- CARD 2: DONATION -->
+        <div class="glass-card p-8 rounded-2xl flex flex-col items-center text-center">
+          <div class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6">
+            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </div>
+
+          <h3 class="font-display font-bold text-2xl text-white mb-2">Донат на развитие</h3>
+          <p class="text-xs text-slate-400 mb-6 max-w-xs">
+            RusEn абсолютно бесплатен. Если утилита экономит ваше время каждый день — поддержите развитие проекта:
+          </p>
+
+          <!-- QR Code container -->
+          <div class="p-3 bg-white rounded-xl shadow-xl mb-4">
+            <img src="assets/donate_qr.png" alt="Donate QR" class="w-44 h-44 object-contain">
+          </div>
+
+          <div class="text-slate-300 font-medium text-sm">
+            Оплата через мобильный банк (СБП)
+          </div>
+          <span class="text-[11px] text-slate-500 mt-2">Отсканируйте камерой телефона или в приложении банка</span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DOWNLOAD / RELEASE SECTION -->
+  <section id="download" class="py-24 relative bg-gradient-to-b from-transparent via-indigo-950/20 to-transparent border-t border-white/5">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      
+      <div class="glass-card p-10 sm:p-14 rounded-3xl relative overflow-hidden border-indigo-500/30 shadow-2xl">
+        
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl ring-2 ring-indigo-500/40">
+          <img src="assets/app_icon.png" alt="RusEn App Icon" class="w-full h-full object-cover">
+        </div>
+
+        <h2 class="font-display font-extrabold text-3xl sm:text-5xl text-white mb-4">
+          Скачайте RusEn для Windows
+        </h2>
+        
+        <p class="text-slate-300 text-base sm:text-lg max-w-xl mx-auto mb-8">
+          Удобный установщик включает все необходимые компоненты для работы автопереключения и голосового ввода на Windows 10 и 11 (64-bit).
+        </p>
+
+        <!-- Big download button -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+          <a href="https://github.com/prorokusa/RusEn-App/releases/latest" 
+             target="_blank" rel="noopener noreferrer"
+             class="w-full sm:w-auto inline-flex items-center justify-center space-x-3 px-10 py-5 text-lg font-bold text-white bg-gradient-to-r from-brand-600 via-indigo-600 to-indigo-500 hover:from-brand-500 hover:to-indigo-400 rounded-2xl shadow-2xl shadow-indigo-600/40 transition-all hover:scale-105 active:scale-95 ring-1 ring-white/20">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.551H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.952"/></svg>
+            <span>Скачать RusEn_Setup_v1.0.exe</span>
+          </a>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 font-mono">
+          <span>Версия: <strong>1.0.0</strong></span>
+          <span>ОС: <strong>Windows 10 / 11 (x64)</strong></span>
+          <span>Репозиторий: <a href="https://github.com/prorokusa/RusEn-App" target="_blank" class="text-indigo-400 hover:underline">prorokusa/RusEn-App</a></span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="py-12 border-t border-white/5 bg-slate-950 text-slate-400 text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <div class="flex items-center space-x-3">
+        <img src="assets/app_icon.png" alt="RusEn" class="w-6 h-6 rounded-md">
+        <span class="text-slate-300 font-bold font-display">RusEn Engine</span>
+        <span>© 2026. Разработано для комфортной работы с текстом.</span>
+      </div>
+
+      <div class="flex items-center space-x-6">
+        <a href="https://t.me/GEOHEISENBERG" target="_blank" class="hover:text-white transition-colors">Telegram @GEOHEISENBERG</a>
+        <a href="https://github.com/prorokusa/RusEn-App" target="_blank" class="hover:text-white transition-colors">GitHub Releases</a>
+        <a href="#quickstart" class="hover:text-white transition-colors">Инструкция</a>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- DEMO INTERACTIVITY SCRIPT -->
+  <script>
+    function switchDemoTab(tab) {
+      const tabTyping = document.getElementById('demo-tab-typing');
+      const tabVoice = document.getElementById('demo-tab-voice');
+      const btnTyping = document.getElementById('tab-btn-typing');
+      const btnVoice = document.getElementById('tab-btn-voice');
+
+      if (tab === 'typing') {
+        tabTyping.classList.remove('hidden');
+        tabVoice.classList.add('hidden');
+        btnTyping.className = "flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 text-white shadow-md";
+        btnVoice.className = "flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-slate-800 text-slate-400 hover:text-white transition-colors";
+      } else {
+        tabTyping.classList.add('hidden');
+        tabVoice.classList.remove('hidden');
+        btnVoice.className = "flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 text-white shadow-md";
+        btnTyping.className = "flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-slate-800 text-slate-400 hover:text-white transition-colors";
+      }
+    }
+
+    let isTypingRunning = false;
+    function runTypingDemo(originalText, convertedText) {
+      if (isTypingRunning) return;
+      isTypingRunning = true;
+
+      const output = document.getElementById('typing-output');
+      const badge = document.getElementById('layout-badge');
+      const label = document.getElementById('action-label');
+      const time = document.getElementById('action-time');
+
+      output.innerText = "";
+      badge.innerText = "EN";
+      badge.className = "px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700 text-xs font-bold font-mono";
+      label.innerText = "Печать на ошибочной раскладке...";
+      time.innerText = "...";
+
+      let idx = 0;
+      const typeInterval = setInterval(() => {
+        if (idx < originalText.length) {
+          output.innerText += originalText[idx];
+          idx++;
+        } else {
+          clearInterval(typeInterval);
+          // Trigger instant swap!
+          setTimeout(() => {
+            const t0 = performance.now();
+            output.innerText = convertedText;
+            badge.innerText = "RU";
+            badge.className = "px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500 text-xs font-bold font-mono animate-bounce";
+            label.innerText = `Успешно заменено: "${originalText}" ➔ "${convertedText}"`;
+            time.innerText = "18 ms";
+            isTypingRunning = false;
+          }, 350);
+        }
+      }, 70);
+    }
+
+    let isVoiceRunning = false;
+    function simulateVoiceRecord() {
+      if (isVoiceRunning) return;
+      isVoiceRunning = true;
+
+      const badge = document.getElementById('voice-state-badge');
+      const wave = document.getElementById('voice-wave-container');
+      const transcript = document.getElementById('voice-transcript');
+      const latency = document.getElementById('voice-latency');
+      const btn = document.getElementById('btn-simulate-voice');
+
+      badge.innerText = "🔴 Запись звука...";
+      badge.className = "px-2.5 py-0.5 rounded-full bg-red-600 text-white text-xs font-semibold animate-pulse";
+      wave.classList.remove('opacity-40');
+      wave.classList.add('opacity-100');
+      transcript.innerText = "Слушаю речь...";
+      latency.innerText = "Запись: 1.5s";
+      btn.disabled = true;
+
+      setTimeout(() => {
+        badge.innerText = "🔶 Groq Whisper LPU...";
+        badge.className = "px-2.5 py-0.5 rounded-full bg-amber-600 text-white text-xs font-semibold";
+        transcript.innerText = "Отправка в Groq Cloud...";
+
+        setTimeout(() => {
+          badge.innerText = "✓ Вставлено";
+          badge.className = "px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-xs font-semibold";
+          wave.classList.remove('opacity-100');
+          wave.classList.add('opacity-40');
+          transcript.innerHTML = '<span class="text-white font-bold">«Привет, RusEn! Вставь этот текст прямо в активный документ с правильной пунктуацией.»</span>';
+          latency.innerText = "Задержка Groq: 238 ms";
+          btn.disabled = false;
+          isVoiceRunning = false;
+        }, 400);
+
+      }, 1500);
+    }
+  </script>
+
+</body>
+</html>

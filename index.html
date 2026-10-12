@@ -1274,6 +1274,13 @@
           }
         });
       });
+      document.querySelectorAll("a[href*='drive.google.com']").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          if (window.YM_ID && typeof ym !== "undefined") {
+            ym(window.YM_ID, "reachGoal", "download_gdrive");
+          }
+        });
+      });
       document.querySelectorAll("a[href*='t.me']").forEach(function(btn) {
         btn.addEventListener("click", function() {
           if (window.YM_ID && typeof ym !== "undefined") {

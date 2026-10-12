@@ -1,5 +1,19 @@
+User-agent: Googlebot
+Allow: /
+Disallow: /stats.html
+Disallow: /.git/
+
+User-agent: Yandex
+Allow: /
+Disallow: /stats.html
+Disallow: /.git/
+Clean-param: ref /
+Clean-param: utm_source&utm_medium&utm_campaign /
+
 User-agent: *
 Allow: /
+Disallow: /stats.html
+Disallow: /.git/
 
 Sitemap: https://rusen.winserv.space/sitemap.xml
 Host: https://rusen.winserv.space
